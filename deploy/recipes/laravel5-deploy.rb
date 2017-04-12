@@ -6,10 +6,21 @@
 node[:deploy].each do |app_name, deploy|
 
   # Execute `composer install`.
-  execute "composer" do
-    command <<-EOH
-      composer install -d #{deploy[:deploy_to]}/current --optimize-autoloader
+  #execute "composer" do
+  #  command <<-EOH
+  #    composer install -d #{deploy[:deploy_to]}/current --optimize-autoloader
+  #  EOH
+  #end
+
+  script "install_composer" do
+    interpreter "bash"
+    user "root"
+    cwd "#{deploy[:deploy_to]}/current"
+    code <<-EOH
+    curl -s https://getcomposer.org/installer | php
+    php composer.phar install --no-dev --no-interaction --prefer-dist
     EOH
+    only_if { ::File.exist?("#{deploy[:deploy_to]}/current/composer.json")}
   end
 
   # Copy the ".env.example" to ".env", and edit environment configration from 'Stack Custom JSON' setting.
